@@ -2,20 +2,21 @@
   import Week from "./Week.svelte";
   import { setContext } from "svelte";
   let padding = 16;
-  let width = () =>
-    Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
-  let height = () =>
-    Math.max(
-      document.documentElement.clientHeight || 0,
-      window.innerHeight || 0
-    );
 
   setContext("view", {
-    width,
-    height,
+    width: Math.max(
+      document.documentElement.clientWidth || 0,
+      window.innerWidth || 0
+    ),
+    height: Math.max(
+      document.documentElement.clientHeight || 0,
+      window.innerHeight || 0
+    ),
     padding,
     col_number: 7,
   });
+
+  const view = getContext("view");
 
   let weeks = Array(52)
     .fill(0)
@@ -116,7 +117,7 @@
   // .attr("fill", "green");
 </script>
 
-<svg width={width()} height="640"
+<svg width={view.width()} height={view.height()}
   ><g transform="translate({padding} {padding})">
     {#each weeks as week, i}
       <Week index={i} days={week.days} />

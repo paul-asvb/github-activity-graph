@@ -1,10 +1,9 @@
 <script>
   export let days = [];
   export let index = 0;
-  import { getContext } from "svelte";
+  import { getContext, setContext } from "svelte";
 
   const view = getContext("view");
-  console.log(view, days, index);
 
   const element_width =
     (view.width() - view.padding * view.col_number - view.padding) /
