@@ -1,4 +1,6 @@
 <script>
+  import Day from "./Day.svelte";
+
   export let days = [];
   export let index = 0;
   import { getContext, setContext } from "svelte";
@@ -12,14 +14,6 @@
 
 <g transform="translate(0 {index * (element_width + view.padding)})">
   {#each days as day, i}
-    <rect
-      x={i * element_width + view.padding * i}
-      y="0"
-      width={element_width}
-      height={element_width}
-      opacity={day / 10}
-      rx={element_width * 0.1}
-      fill="green"
-    />
+    <Day {day} x={i * element_width + view.padding * i} size={element_width} />
   {/each}
 </g>
