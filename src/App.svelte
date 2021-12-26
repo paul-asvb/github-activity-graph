@@ -26,8 +26,11 @@
       return {
         data: "id_" + i,
         days: Array(7)
-          .fill(0)
-          .map((e) => Math.floor(Math.random() * 10)),
+          .fill(Math.floor(Math.random() * 10))
+          .map((e) => ({
+            value: Math.floor(e),
+            text: "" + e,
+          })),
       };
     });
 </script>
