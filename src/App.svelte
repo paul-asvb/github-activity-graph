@@ -4,16 +4,6 @@
   let padding = 16;
 
   setContext("view", {
-    width: () =>
-      Math.max(
-        document.documentElement.clientWidth || 0,
-        window.innerWidth || 0
-      ),
-    height: () =>
-      Math.max(
-        document.documentElement.clientHeight || 0,
-        window.innerHeight || 0
-      ),
     padding,
     col_number: 7,
   });
@@ -33,9 +23,13 @@
           })),
       };
     });
+
+  let w,h;
 </script>
 
-<svg width={view.width()} height={view.height()}
+<svelte:window bind:innerWidth={w}  bind:innerHeight={h} />
+<h1 style="position: absolute;">{w}</h1>
+<svg width={w} height={h}
   ><g transform="translate({padding} {padding})">
     {#each weeks as week, i}
       <Week index={i} days={week.days} />
