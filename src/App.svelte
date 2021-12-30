@@ -29,10 +29,12 @@
 
 <svelte:window bind:innerWidth={w}  bind:innerHeight={h} />
 <h1 style="position: absolute;">{w}</h1>
-<svg width={w} height={h}
-  ><g transform="translate({padding} {padding})">
+<svg width={w} height={h}>
+  <text y="100" x="100">{w}</text>
+  <text y="100" x="150">{h}</text>
+  <!--g transform="translate({padding} {padding})">
     {#each weeks as week, i}
       <Week index={i} days={week.days} />
     {/each}
-  </g>
+  </g-->
 </svg>
