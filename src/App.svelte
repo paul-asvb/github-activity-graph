@@ -24,14 +24,21 @@
       };
     });
 
-  let w,h;
+  let iw, ih;
+  let ow, oh;
 </script>
 
-<svelte:window bind:innerWidth={w}  bind:innerHeight={h} />
-<h1 style="position: absolute;">{w}</h1>
-<svg width={w} height={h}>
-  <text y="100" x="100">{w}</text>
-  <text y="100" x="150">{h}</text>
+<svelte:window
+  bind:innerWidth={iw}
+  bind:innerHeight={ih}
+  bind:outerWidth={ow}
+  bind:outerHeight={oh}
+/>
+<svg width={ow} height={ih}>
+  <text x="100" y="100">inner w {iw}</text>
+  <text x="100" y="150">inner h{ih}</text>
+  <text x="200" y="100">outer w {ow}</text>
+  <text x="200" y="150">outer h {oh}</text>
   <!--g transform="translate({padding} {padding})">
     {#each weeks as week, i}
       <Week index={i} days={week.days} />
