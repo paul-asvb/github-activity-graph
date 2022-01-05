@@ -39,6 +39,13 @@
   <text x="100" y="150">inner h{ih}</text>
   <text x="200" y="100">outer w {ow}</text>
   <text x="200" y="150">outer h {oh}</text>
+  <rect
+    fill="red"
+    x={padding}
+    y={padding}
+    width={iw - 2 * padding}
+    height={ih - 2 * padding}
+  />
   <!--g transform="translate({padding} {padding})">
     {#each weeks as week, i}
       <Week index={i} days={week.days} />
