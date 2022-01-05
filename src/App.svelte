@@ -35,10 +35,6 @@
   bind:outerHeight={oh}
 />
 <svg width={ow} height={ih}>
-  <text x="100" y="100">inner w {iw}</text>
-  <text x="100" y="150">inner h{ih}</text>
-  <text x="200" y="100">outer w {ow}</text>
-  <text x="200" y="150">outer h {oh}</text>
   <rect
     fill="red"
     x={padding}
@@ -46,6 +42,11 @@
     width={iw - 2 * padding}
     height={ih - 2 * padding}
   />
+  <text x="100" y="100">inner w {iw}</text>
+  <text x="100" y="120">inner h{ih}</text>
+  <text x="100" y="200">outer w {ow}</text>
+  <text x="100" y="220">outer h {oh}</text>
+
   <!--g transform="translate({padding} {padding})">
     {#each weeks as week, i}
       <Week index={i} days={week.days} />
