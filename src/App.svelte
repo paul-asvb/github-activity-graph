@@ -24,8 +24,7 @@
       };
     });
 
-  let iw, ih;
-  let ow, oh;
+  let iw, ih, ow, oh;
 </script>
 
 <svelte:window
@@ -40,8 +39,14 @@
   viewBox="0 0 100 100"
   preserveAspectRatio="none"
 >
-  <path d="M0 0 L100 0 L50 100 Z" />
 
+<rect
+    fill="red"
+    x=0
+    y=0
+    width="100vw"
+    height="100vh"
+  /> -->
   <!-- <rect
     fill="red"
     x={padding}
