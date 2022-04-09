@@ -33,6 +33,8 @@
   bind:outerWidth={ow}
   bind:outerHeight={oh}
 />
+<!-- 
+
 <svg
   height="100vh"
   width="100vw"
@@ -53,17 +55,16 @@
     y={padding}
     width={iw - 2 * padding}
     height={ih - 2 * padding}
-  /> -->
-<!-- 
+  />
   <line x1="0" y1="0" x2={iw} y2={ih} stroke="black" />
   <text x="100" y="100">inner w {iw}</text>
   <text x="100" y="120">inner h{ih}</text>
   <text x="100" y="200">outer w {ow}</text>
-  <text x="100" y="220">outer h {oh}</text> -->
+  <text x="100" y="220">outer h {oh}</text> 
 
-  <!--g transform="translate({padding} {padding})">
+  g transform="translate({padding} {padding})">
     {#each weeks as week, i}
       <Week index={i} days={week.days} />
     {/each}
-  </g-->
-</svg>
+  </g
+</svg-->
