@@ -33,7 +33,6 @@
   bind:outerWidth={ow}
   bind:outerHeight={oh}
 />
-<!-- 
 
 <svg
   height="100vh"
@@ -41,15 +40,10 @@
   viewBox="0 0 100 100"
   preserveAspectRatio="none"
 >
-
-<rect
-    fill="red"
-    x=0
-    y=0
-    width="100vw"
-    height="100vh"
-  /> -->
-  <!-- <rect
+  <rect fill="red" x="0" y="0" width="100" height="100" />
+  <rect fill="yellow" x="50" y="50" width="100" height="100" />
+</svg>
+<!-- <rect
     fill="red"
     x={padding}
     y={padding}
