@@ -5,7 +5,7 @@
   export let index = 0;
   import { getContext, setContext } from "svelte";
   const view = getContext("view");
-  let w = 400;
+  let w = 100;
   const element_width = () =>
     (w - view.padding * view.col_number - view.padding) / view.col_number;
 </script>
