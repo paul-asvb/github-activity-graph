@@ -10,19 +10,8 @@
 
   const view = getContext("view");
 
-  let weeks = Array(52)
-    .fill(0)
-    .map((e, i) => {
-      return {
-        data: "id_" + i,
-        days: Array(7)
-          .fill(Math.floor(Math.random() * 10))
-          .map((e) => ({
-            value: Math.floor(e),
-            text: "" + e,
-          })),
-      };
-    });
+  //let days = Array(365).fill(Math.random());
+  // todo seperate viz and data
 
   let iw, ih, ow, oh;
 </script>

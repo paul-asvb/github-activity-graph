@@ -1,18 +1,16 @@
 <script>
   import Day from "./Day.svelte";
-
   export let days = [];
   export let index = 0;
-  import { getContext, setContext } from "svelte";
-  const view = getContext("view");
-  let w = 100;
-  const element_width = () =>
-    (w - view.padding * view.col_number - view.padding) / view.col_number;
+  let padding = 1;
+  const element_width = () => (100 - padding * 7 - padding) / 7;
 </script>
 
-<svelte:window bind:innerWidth={w} />
-<g transform="translate(0 {index * (element_width() + view.padding)})">
+<g
+  transform="translate({padding} {index * (element_width() + padding) +
+    padding})"
+>
   {#each days as day, i}
-    <Day {day} x={i * element_width() + view.padding * i} size={element_width()} />
+    <Day {day} x={i * element_width() + padding * i} size={element_width()} />
   {/each}
 </g>
