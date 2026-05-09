@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+@theme {
+  --grid-template-columns-53: repeat(53, minmax(0, 1fr));
+}

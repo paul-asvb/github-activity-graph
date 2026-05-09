@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "bladerunner": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Bladerunner",
+      "options": {
+        "baseURL": "https://litellm.services.bladerunner.deepc-gate.de",
+        "apiKey": "sk-kaNT7knKBE0lUqcvGV_wbA"
+      },
+      "models": {
+        "qwen.qwen3-235b-a22b-2507-v1:0": {
+          "name": "Qwen 3 235b",
+          "limit": {
+            "context": 254000,
+            "output": 8192
+          }
+        },
+        "mistral.devstral-2-123b": {
+          "name": "Devstral 2 123b",
+        }
+      }
+    }
+  }
+}
