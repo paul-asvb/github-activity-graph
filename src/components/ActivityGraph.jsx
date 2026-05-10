@@ -84,24 +84,161 @@ const buildYearGrid = (year) => {
   return { cells, weeks, monthMarkers };
 };
 
+// Today at local midnight, used to clip stats so future days don't count.
+const startOfToday = () => {
+  const t = new Date();
+  t.setHours(0, 0, 0, 0);
+  return t;
+};
+
+// True if a grid cell's date is on or before today (local).
+const isPastOrToday = (cell, today) => {
+  if (!cell) return false;
+  const d = new Date(cell.date);
+  if (Number.isNaN(d.getTime())) return false;
+  d.setHours(0, 0, 0, 0);
+  return d <= today;
+};
+
+// Compute the active rate per weekday (Sun..Sat): fraction of days
+// (count > 0) over total real days for that weekday.
+const binaryByWeekday = (cells) => {
+  const today = startOfToday();
+  const active = new Array(7).fill(0);
+  const total = new Array(7).fill(0);
+  for (const cell of cells) {
+    if (!cell) continue;
+    if (!isPastOrToday(cell, today)) continue;
+    total[cell.weekday] += 1;
+    if (cell.count > 0) active[cell.weekday] += 1;
+  }
+  return active.map((a, i) => ({
+    active: a,
+    total: total[i],
+    rate: total[i] ? a / total[i] : 0,
+  }));
+};
+
 // Compute the average contribution count per weekday (Sun..Sat) over all
 // real (non-null) cells in the year grid.
 const averagesByWeekday = (cells) => {
+  const today = startOfToday();
   const sums = new Array(7).fill(0);
   const counts = new Array(7).fill(0);
   for (const cell of cells) {
     if (!cell) continue;
+    if (!isPastOrToday(cell, today)) continue;
     sums[cell.weekday] += cell.count;
     counts[cell.weekday] += 1;
   }
   return sums.map((s, i) => (counts[i] ? s / counts[i] : 0));
 };
 
+// Compute binary (active vs. idle) day statistics for the year.
+// Treats each day as 1 if count > 0, else 0, and reports streaks, gaps,
+// run counts, averages, and the trailing run at year end.
+const binaryDayStats = (cells) => {
+  const today = startOfToday();
+  const real = cells.filter((c) => c && isPastOrToday(c, today));
+
+  let longestActive = 0;
+  let longestActiveRange = null;
+  let longestIdle = 0;
+  let longestIdleRange = null;
+
+  let activeRuns = 0;
+  let idleRuns = 0;
+  let activeRunSum = 0;
+  let idleRunSum = 0;
+
+  let runLen = 0;
+  let runActive = null; // true=active, false=idle, null=unstarted
+  let runStart = null;
+
+  const closeRun = (endDate) => {
+    if (runActive === null || runLen === 0) return;
+    if (runActive) {
+      activeRuns += 1;
+      activeRunSum += runLen;
+      if (runLen > longestActive) {
+        longestActive = runLen;
+        longestActiveRange = { start: runStart, end: endDate };
+      }
+    } else {
+      idleRuns += 1;
+      idleRunSum += runLen;
+      if (runLen > longestIdle) {
+        longestIdle = runLen;
+        longestIdleRange = { start: runStart, end: endDate };
+      }
+    }
+  };
+
+  let prevDate = null;
+  for (const cell of real) {
+    const isActive = cell.count > 0;
+    if (runActive === null) {
+      runActive = isActive;
+      runStart = cell.date;
+      runLen = 1;
+    } else if (isActive === runActive) {
+      runLen += 1;
+    } else {
+      closeRun(prevDate);
+      runActive = isActive;
+      runStart = cell.date;
+      runLen = 1;
+    }
+    prevDate = cell.date;
+  }
+  // close trailing run (it's also the "current" run for this year)
+  const trailing =
+    runActive === null
+      ? null
+      : { active: runActive, length: runLen, start: runStart, end: prevDate };
+  closeRun(prevDate);
+
+  return {
+    longestActive,
+    longestActiveRange,
+    longestIdle,
+    longestIdleRange,
+    activeRuns,
+    idleRuns,
+    avgActiveRun: activeRuns ? activeRunSum / activeRuns : 0,
+    avgIdleRun: idleRuns ? idleRunSum / idleRuns : 0,
+    trailing,
+  };
+};
+
+// Days since the most recent active day across the entire dataset,
+// measured from today. Returns null if there is no active day on/before today.
+const daysSinceLastContribution = (map) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let latest = null;
+  for (const [dateStr, count] of map) {
+    if (count <= 0) continue;
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) continue;
+    if (d > today) continue;
+    if (!latest || d > latest) latest = d;
+  }
+  if (!latest) return { date: null, days: null };
+  const ms = today - latest;
+  const days = Math.round(ms / 86400000);
+  const yyyy = latest.getFullYear();
+  const mm = String(latest.getMonth() + 1).padStart(2, '0');
+  const dd = String(latest.getDate()).padStart(2, '0');
+  return { date: `${yyyy}-${mm}-${dd}`, days };
+};
+
 // Compute summary statistics for the year:
 // totals, active/idle days, average, peak day, longest streak,
 // busiest weekday, busiest month.
 const yearStats = (cells) => {
-  const real = cells.filter(Boolean);
+  const today = startOfToday();
+  const real = cells.filter((c) => c && isPastOrToday(c, today));
   const totalDays = real.length;
   let total = 0;
   let activeDays = 0;
@@ -179,7 +316,10 @@ const ActivityGraph = () => {
   );
   const weekdayAverages = useMemo(() => averagesByWeekday(cells), [cells]);
   const maxAverage = Math.max(...weekdayAverages, 0.0001);
+  const weekdayBinary = useMemo(() => binaryByWeekday(cells), [cells]);
   const stats = useMemo(() => yearStats(cells), [cells]);
+  const binStats = useMemo(() => binaryDayStats(cells), [cells]);
+  const sinceLast = useMemo(() => daysSinceLastContribution(activityMap), []);
 
   const handleYearChange = (direction) => {
     setCurrentYear((prev) => prev + direction);
@@ -344,34 +484,129 @@ const ActivityGraph = () => {
         </div>
       </div>
 
-      {/* Average contributions per weekday */}
-      <div className="mt-8 max-w-md">
+      {/* Binary day statistics (active vs. idle) */}
+      <div className="mt-8">
         <h3 className="text-lg font-semibold mb-3">
-          Average contributions per weekday
+          {currentYear} binary day statistics
         </h3>
-        <div className="space-y-1.5">
-          {DAY_LABELS.map((label, i) => {
-            const avg = weekdayAverages[i];
-            const widthPct = (avg / maxAverage) * 100;
-            return (
-              <div key={label} className="flex items-center text-sm">
-                <span className="w-10 text-gray-600">{label}</span>
-                <div className="flex-1 bg-gray-100 rounded h-5 relative overflow-hidden">
-                  <div
-                    className="h-full rounded transition-all"
-                    style={{
-                      width: `${widthPct}%`,
-                      backgroundColor: colorForCount(Math.round(avg) || 1),
-                    }}
-                    title={`${label}: avg ${avg.toFixed(2)} contributions`}
-                  />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <StatCard
+            label="Longest active streak"
+            value={`${binStats.longestActive} ${binStats.longestActive === 1 ? 'day' : 'days'}`}
+            sub={
+              binStats.longestActiveRange
+                ? `${binStats.longestActiveRange.start} → ${binStats.longestActiveRange.end}`
+                : '—'
+            }
+          />
+          <StatCard
+            label="Longest idle streak"
+            value={`${binStats.longestIdle} ${binStats.longestIdle === 1 ? 'day' : 'days'}`}
+            sub={
+              binStats.longestIdleRange
+                ? `${binStats.longestIdleRange.start} → ${binStats.longestIdleRange.end}`
+                : '—'
+            }
+          />
+          <StatCard
+            label="Active runs"
+            value={binStats.activeRuns}
+            sub={`avg ${binStats.avgActiveRun.toFixed(2)} days`}
+          />
+          <StatCard
+            label="Idle runs"
+            value={binStats.idleRuns}
+            sub={`avg ${binStats.avgIdleRun.toFixed(2)} days`}
+          />
+          <StatCard
+            label={
+              binStats.trailing
+                ? binStats.trailing.active
+                  ? 'Current active streak'
+                  : 'Current idle streak'
+                : 'Current streak'
+            }
+            value={
+              binStats.trailing
+                ? `${binStats.trailing.length} ${binStats.trailing.length === 1 ? 'day' : 'days'}`
+                : '—'
+            }
+            sub={
+              binStats.trailing
+                ? `since ${binStats.trailing.start}`
+                : undefined
+            }
+          />
+          <StatCard
+            label="Days since last contribution"
+            value={sinceLast.days ?? '—'}
+            sub={sinceLast.date ? `last: ${sinceLast.date}` : 'no data'}
+          />
+        </div>
+      </div>
+
+      {/* Weekday breakdowns: average contributions and active-day rate */}
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl">
+        <div>
+          <h3 className="text-lg font-semibold mb-3">
+            Average contributions per weekday
+          </h3>
+          <div className="space-y-1.5">
+            {DAY_LABELS.map((label, i) => {
+              const avg = weekdayAverages[i];
+              const widthPct = (avg / maxAverage) * 100;
+              return (
+                <div key={label} className="flex items-center text-sm">
+                  <span className="w-10 text-gray-600">{label}</span>
+                  <div className="flex-1 bg-gray-100 rounded h-5 relative overflow-hidden">
+                    <div
+                      className="h-full rounded transition-all"
+                      style={{
+                        width: `${widthPct}%`,
+                        backgroundColor: colorForCount(Math.round(avg) || 1),
+                      }}
+                      title={`${label}: avg ${avg.toFixed(2)} contributions`}
+                    />
+                  </div>
+                  <span className="w-14 text-right tabular-nums text-gray-700">
+                    {avg.toFixed(2)}
+                  </span>
                 </div>
-                <span className="w-14 text-right tabular-nums text-gray-700">
-                  {avg.toFixed(2)}
-                </span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold mb-3">
+            Active-day rate per weekday
+          </h3>
+          <div className="space-y-1.5">
+            {DAY_LABELS.map((label, i) => {
+              const { active, total, rate } = weekdayBinary[i];
+              const widthPct = rate * 100;
+              return (
+                <div key={label} className="flex items-center text-sm">
+                  <span className="w-10 text-gray-600">{label}</span>
+                  <div className="flex-1 bg-gray-100 rounded h-5 relative overflow-hidden">
+                    <div
+                      className="h-full rounded transition-all"
+                      style={{
+                        width: `${widthPct}%`,
+                        backgroundColor: colorForCount(
+                          Math.max(1, Math.round(rate * 9)),
+                        ),
+                      }}
+                      title={`${label}: ${active}/${total} active (${(rate * 100).toFixed(1)}%)`}
+                    />
+                  </div>
+                  <span className="w-14 text-right tabular-nums text-gray-700">
+                    {(rate * 100).toFixed(0)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
